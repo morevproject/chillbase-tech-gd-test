@@ -3,29 +3,9 @@
 [RequireComponent(typeof(Rigidbody))]
 public class ArcadeCarController : MonoBehaviour
 {
-    [Header("Engine & Speed")]
-    [Tooltip("Ускорение автомобиля (м/с²)")]
-    [SerializeField] private float acceleration = 32f;
-
-    [Tooltip("Максимальная скорость вперед (м/с)")]
-    [SerializeField] private float maxSpeed = 26f;
-
-    [Tooltip("Максимальная скорость назад (м/с)")]
-    [SerializeField] private float reverseSpeed = 12f;
-
-    [Tooltip("Сила торможения (м/с²)")]
-    [SerializeField] private float brakeStrength = 45f;
-
-    [Header("Steering & Handling")]
-    [Tooltip("Скорость поворота кузова (градусов/сек)")]
-    [SerializeField] private float turnSpeed = 130f;
-
-    [Tooltip("Коэффициент бокового сцепления (0 - лед, 1 - рельсы)")]
-    [Range(0.1f, 1f)]
-    [SerializeField] private float gripFactor = 0.88f;
-
-    [Tooltip("Скорость подстройки наклона под рельеф")]
-    [SerializeField] private float slopeAlignSpeed = 15f;
+    [Header("Configuration")]
+    [Tooltip("Дата-ассет с параметрами физики и баланса автомобиля")]
+    [SerializeField] private CarSettingsSO settings;
 
     [Header("State")]
     public bool isControlled = false;
@@ -44,7 +24,7 @@ public class ArcadeCarController : MonoBehaviour
 
     private void Update()
     {
-        if (!isControlled)
+        if (!isControlled || settings == null)
         {
             moveInput = 0f;
             steerInput = 0f;
@@ -62,7 +42,7 @@ public class ArcadeCarController : MonoBehaviour
         rb.angularVelocity = Vector3.zero;
 
         isGrounded = CheckGround();
-        if (!isGrounded) return;
+        if (!isGrounded || settings == null) return;
 
         ApplyMovement();
         ApplySteering();
@@ -83,7 +63,7 @@ public class ArcadeCarController : MonoBehaviour
         {
             if (Mathf.Abs(forwardSpeed) > 0.1f)
             {
-                Vector3 brakeVector = -transform.forward * Mathf.Sign(forwardSpeed) * brakeStrength;
+                Vector3 brakeVector = -transform.forward * Mathf.Sign(forwardSpeed) * settings.brakeStrength;
                 rb.AddForce(brakeVector, ForceMode.Acceleration);
             }
             else
@@ -93,13 +73,13 @@ public class ArcadeCarController : MonoBehaviour
             return;
         }
 
-        if (moveInput > 0.05f && forwardSpeed < maxSpeed)
+        if (moveInput > 0.05f && forwardSpeed < settings.maxSpeed)
         {
-            rb.AddForce(transform.forward * (moveInput * acceleration), ForceMode.Acceleration);
+            rb.AddForce(transform.forward * (moveInput * settings.acceleration), ForceMode.Acceleration);
         }
-        else if (moveInput < -0.05f && forwardSpeed > -reverseSpeed)
+        else if (moveInput < -0.05f && forwardSpeed > -settings.reverseSpeed)
         {
-            rb.AddForce(transform.forward * (moveInput * acceleration), ForceMode.Acceleration);
+            rb.AddForce(transform.forward * (moveInput * settings.acceleration), ForceMode.Acceleration);
         }
         else if (Mathf.Abs(moveInput) <= 0.05f)
         {
@@ -116,7 +96,7 @@ public class ArcadeCarController : MonoBehaviour
         if (Mathf.Abs(steerInput) > 0.05f && (Mathf.Abs(forwardSpeed) > 0.1f || Mathf.Abs(moveInput) > 0.05f))
         {
             float directionModifier = forwardSpeed >= -0.1f ? 1f : -1f;
-            float turnAmount = steerInput * turnSpeed * directionModifier * Time.fixedDeltaTime;
+            float turnAmount = steerInput * settings.turnSpeed * directionModifier * Time.fixedDeltaTime;
             Quaternion turnRotation = Quaternion.AngleAxis(turnAmount, transform.up);
             rb.MoveRotation(turnRotation * rb.rotation);
         }
@@ -125,12 +105,12 @@ public class ArcadeCarController : MonoBehaviour
         Vector3 currentUp = transform.up;
         Vector3 targetUp = groundHit.normal;
         Quaternion tiltCorrection = Quaternion.FromToRotation(currentUp, targetUp);
-        rb.MoveRotation(Quaternion.Slerp(rb.rotation, tiltCorrection * rb.rotation, Time.fixedDeltaTime * slopeAlignSpeed));
+        rb.MoveRotation(Quaternion.Slerp(rb.rotation, tiltCorrection * rb.rotation, Time.fixedDeltaTime * settings.slopeAlignSpeed));
     }
 
     private void ApplyLateralGrip()
     {
         Vector3 lateralVelocity = transform.right * Vector3.Dot(rb.velocity, transform.right);
-        rb.velocity -= lateralVelocity * (gripFactor * Time.fixedDeltaTime * 10f);
+        rb.velocity -= lateralVelocity * (settings.gripFactor * Time.fixedDeltaTime * 10f);
     }
 }

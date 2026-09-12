@@ -1419,13 +1419,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b15050110bb30ad49a6793b8b5a36f86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  acceleration: 25
-  maxSpeed: 30
-  reverseSpeed: 10
-  brakeStrength: 40
-  turnSpeed: 80
-  gripFactor: 0.85
-  slopeAlignSpeed: 12
+  settings: {fileID: 11400000, guid: 031a517a50325a14695d363bdbcbd7ec, type: 2}
   isControlled: 0
 --- !u!135 &1870136501
 SphereCollider:
